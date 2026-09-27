@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.链接跳转" parent="@android:style/Theme.Material.NoActionBar">
+        <!-- 暗色背景颜色 (对应 MaterialTheme.colorScheme.background) -->
+        <item name="android:windowBackground">#FF1C1B1F</item>
+    </style>
+</resources>

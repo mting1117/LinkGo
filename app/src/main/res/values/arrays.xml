@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- LSPosed 作用域：system_server（系统框架）用于剪贴板，com.android.systemui 用于超级岛诊断监控 -->
+    <string-array name="xposed_scope">
+        <item>android</item>
+        <item>com.android.systemui</item>
+        <item>com.xiaomi.xmsf</item>
+    </string-array>
+</resources>

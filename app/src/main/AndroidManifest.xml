@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- 跳转后清空剪贴板：仅同签名应用可向 system_server 清空接收器发广播 -->
+    <permission
+        android:name="com.moting.linkgo.permission.CLEAR_CLIPBOARD"
+        android:protectionLevel="signature" />
+
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />
+    <!-- 跳转后清空剪贴板（LSPosed system_server 清空接收器的签名保护权限） -->
+    <uses-permission android:name="com.moting.linkgo.permission.CLEAR_CLIPBOARD" />
+    <!-- Shizuku 权限 -->
+    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
+    <uses-permission android:name="shizuku.permission.API_V23" />
+    <!-- 前台服务权限 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- 悬浮窗权限（用于获取窗口焦点以读取剪贴板） -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- 忽略电池优化（后台前台服务防灭屏被杀保活） -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- 开机自启动与预热广播权限 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- 广播冷启动唤醒持锁权限 -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- 保存图片到相册：API 30+ 的 Scoped Storage 下写 MediaStore 无需权限，
+         因此这里限定 maxSdkVersion="29"，避免高版本触发多余的系统授权弹窗 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="http" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="text/plain" />
+        </intent>
+        <!-- 图片规则的目标应用选择器依赖此声明，缺了它 Android 11+ 会因包可见性返回空列表 -->
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="image/*" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="package" />
+        </intent>
+        <package android:name="com.tencent.mm" />
+        <intent>
+            <action android:name="com.tencent.mm.action.BIZSHORTCUT" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".LinkGoApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
+        android:enableOnBackInvokedCallback="true"
+        android:theme="@style/Theme.链接跳转">
+
+        <!-- LSPosed 模块声明 -->
+        <meta-data
+            android:name="xposedminversion"
+            android:value="93" />
+        <meta-data
+            android:name="xposeddescription"
+            android:value="@string/xposed_description" />
+        <meta-data
+            android:name="xposedscope"
+            android:resource="@array/xposed_scope" />
+        <meta-data
+            android:name="libxposed"
+            android:value="true" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize"
+            android:theme="@style/Theme.链接跳转">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="de.robv.android.xposed.category.MODULE_SETTINGS" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".LinkDispatcherActivity"
+            android:exported="true"
+            android:label="链接分发"
+            android:theme="@style/Theme.Trampoline"
+            android:taskAffinity=".trampoline"
+            android:launchMode="singleInstance"
+            android:excludeFromRecents="true"
+            android:noHistory="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+            </intent-filter>
+            <!-- 带 MIME 的 VIEW 意图（YouTube 等应用发 ACTION_VIEW + setDataAndType(url, "text/html")）。
+                 平台匹配规则：intent 带 MIME 时 filter 必须声明 mimeType，只声明 scheme 一律 NO_MATCH_TYPE；
+                 但 filter 一旦声明 type，就再也匹配不上「不带 MIME」的意图，故必须独立成 filter。
+                 上面那个 filter 负责「无 MIME 的链接」，这个负责「带任意 MIME 的链接」，两者互补缺一不可。 -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ShareOpenAppProxyActivity"
+            android:exported="true"
+            android:label="分享直达服务"
+            android:theme="@style/Theme.Transparent" />
+
+        <!-- 图片发送跳板：从图片胶囊通知进入，弹出系统分享选择器后立即退出 -->
+        <activity
+            android:name=".image.ImageSendActivity"
+            android:exported="false"
+            android:label="发送图片"
+            android:theme="@style/Theme.Transparent"
+            android:taskAffinity=".image_send"
+            android:excludeFromRecents="true"
+            android:noHistory="true" />
+
+        <activity
+            android:name=".router.NormalRouterActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Transparent"
+            android:taskAffinity=".router_normal"
+            android:excludeFromRecents="true"
+            android:noHistory="true" />
+
+        <activity
+            android:name=".router.HiddenRouterActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Transparent"
+            android:taskAffinity=".router_hidden"
+            android:excludeFromRecents="true"
+            android:noHistory="true" />
+
+        <!-- 图片手动选择页：命中多条图片规则时平铺候选，与链接的多引擎选择对等 -->
+        <activity
+            android:name=".ImageSelectorActivity"
+            android:exported="false"
+            android:label="选择发送目标"
+            android:theme="@style/Theme.Transparent"
+            android:taskAffinity=".image_selector"
+            android:launchMode="singleTop"
+            android:excludeFromRecents="true" />
+
+        <activity
+            android:name=".LinkSelectionActivity"
+            android:exported="false"
+            android:label="选择链接"
+            android:theme="@style/Theme.Transparent"
+            android:taskAffinity=".selection"
+            android:launchMode="singleTop"
+            android:excludeFromRecents="true" />
+
+        <activity
+            android:name=".BrowserSelectorActivity"
+            android:exported="false"
+            android:label="选择浏览器"
+            android:theme="@style/Theme.Transparent"
+            android:taskAffinity=".browser_selector"
+            android:launchMode="singleTop"
+            android:excludeFromRecents="true" />
+
+        <activity
+            android:name=".ui.RuleImportActivity"
+            android:exported="true"
+            android:label="导入规则"
+            android:theme="@style/Theme.Trampoline"
+            android:excludeFromRecents="true"
+            android:noHistory="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:host="*" />
+                <data android:mimeType="application/json" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:host="*" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:host="*" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.json" />
+                <data android:pathPattern=".*\\..*\\.json" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="application/json" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+        </activity>
+
+        <!-- 剪贴板焦点提权 Activity（透明，短暂获取焦点后读剪贴板） -->
+        <activity
+            android:name=".ClipboardFocusActivity"
+            android:exported="false"
+            android:label=""
+            android:theme="@style/Theme.Transparent"
+            android:taskAffinity=".clipboard_focus"
+            android:launchMode="singleInstance"
+            android:excludeFromRecents="true"
+            android:noHistory="true" />
+
+        <activity
+            android:name=".ClipboardAnalysisActivity"
+            android:exported="true"
+            android:label="剪贴板分析"
+            android:theme="@style/Theme.Trampoline"
+            android:taskAffinity=".clipboard"
+            android:launchMode="singleInstance"
+            android:excludeFromRecents="true"
+            android:noHistory="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.LinkHighlighterActivity"
+            android:exported="true"
+            android:label="屏幕识别"
+            android:theme="@style/Theme.Transparent"
+            android:taskAffinity=".highlighter"
+            android:launchMode="singleInstance"
+            android:excludeFromRecents="true"
+            android:noHistory="true">
+            <intent-filter>
+                <action android:name="com.moting.linkgo.action.HIGHLIGHT_LINKS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".RadarDirectActivity"
+            android:exported="true"
+            android:label="滑动直达"
+            android:theme="@style/Theme.Trampoline"
+            android:taskAffinity=".radar_direct"
+            android:launchMode="singleInstance"
+            android:excludeFromRecents="true"
+            android:noHistory="true">
+            <intent-filter>
+                <action android:name="com.moting.linkgo.action.RADAR_DIRECT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name="com.google.android.accessibility.selecttospeak.SelectToSpeakService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+        <!-- 剪贴板分析 磁贴 -->
+        <service
+            android:name=".service.ClipboardTileService"
+            android:label="剪贴板分析"
+            android:icon="@drawable/ic_tile_clipboard"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- 屏幕识别 磁贴 -->
+        <service
+            android:name=".service.HighlighterTileService"
+            android:label="屏幕识别"
+            android:icon="@drawable/ic_tile_highlighter"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- 剪贴板后台监听 前台服务 -->
+        <service
+            android:name=".service.ClipboardMonitorService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="clipboard_monitoring" />
+        </service>
+
+        <!-- Shizuku Provider -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:enabled="true"
+            android:exported="true"
+            android:multiprocess="false"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+
+        <!-- LSPosed 钩子广播接收器：接收 system_server 截获的剪贴板文本 -->
+        <receiver
+            android:name=".clipboard.ClipboardTextReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.moting.linkgo.action.HANDLE_CLIPBOARD_TEXT" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 应用内链接捕获广播接收器：接收 system_server 捕获的应用内打开的 http/https 链接 -->
+        <receiver
+            android:name=".applink.LinkIntentReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.moting.linkgo.action.HANDLE_APP_LINK" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 开机自启与静默预热广播接收器 (解锁后安全执行) -->
+        <receiver
+            android:name=".receiver.BootCompletedReceiver"
+            android:exported="true">
+            <intent-filter android:priority="1000">
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 实时活动通知快捷操作广播接收器 (复制链接等) -->
+        <receiver
+            android:name=".util.NotificationActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.moting.linkgo.action.COPY_URL" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 自动备份闹钟接收器 -->
+        <receiver
+            android:name=".receiver.BackupAlarmReceiver"
+            android:exported="false" />
+
+        <!-- 超级岛诊断跨进程日志接收器 (接收来自 SystemUI LSPosed Hook 的事件) -->
+        <receiver
+            android:name=".receiver.SuperIslandLogReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.moting.linkgo.action.SUPER_ISLAND_DIAG_EVENT" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 临时保存图片5分钟定时自动删除接收器 -->
+        <receiver
+            android:name=".image.TemporaryImageCleanerReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.moting.linkgo.action.DELETE_TEMP_IMAGE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 文件分享 FileProvider -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- Shizuku ContentProvider (required for Shizuku API v23+) -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:multiprocess="false"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+
+    </application>
+
+
+</manifest>

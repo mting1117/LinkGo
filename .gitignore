@@ -1,0 +1,37 @@
+*.iml
+.gradle
+/local.properties
+.DS_Store
+build/
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+.kotlin/
+
+# --- IDE 工程配置（本机专属，不入库）---
+.idea/
+.vscode/
+
+# --- 本地敏感与临时产物（禁止入库）---
+# 签名私钥：一旦提交会永久留在 git 历史里，删除文件也无法清除
+signing/
+# 运行期调试日志与临时转储
+*.log
+logcat_dump.txt
+# 本地工作记忆目录
+.workbuddy/
+# 本地归档：收款码、内部计划文档、历史版本安装包
+.local-docs/
+# 仓库内不存放构建产物安装包（正式包走 GitHub Releases 发布）
+app/release/*.apk
+app/release/*.APK
+
+# --- 根目录文档（不属于打包代码，仅保留在本地）---
+/AGENTS.md
+/META_RULES.md
+/CHANGELOG.md
+/implementation_plan.md
+/clipboard_trigger_capsule_notification_review.md
+/图片识别方案.md
+/地址识别方案.md
