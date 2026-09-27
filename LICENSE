@@ -1,0 +1,73 @@
+LinkGo 许可声明
+Copyright (c) 2026 mting1117
+保留所有权利 (All Rights Reserved)
+
+本文件是作者为 LinkGo 项目制定的使用条款，并非 OSI 认可的开源许可证。
+本项目源代码公开，目的是供他人阅读、学习与参考，不代表放弃著作权，
+也不代表授予商业使用权利。
+
+
+一、允许的行为
+
+在无需事先获得作者书面许可的情况下，你可以：
+
+1. 查看、阅读本项目的源代码；
+2. 为个人学习、研究、教学目的而下载与编译本项目；
+3. 在个人设备上安装并运行本项目，用于非商业的个人用途；
+4. 在非商业的技术讨论、文章或评测中引用本项目的少量代码片段，
+   但须注明出处并保留本许可声明。
+
+
+二、禁止的行为
+
+未经作者事先书面许可，你不得：
+
+1. 将本项目或其衍生作品用于任何商业目的，包括但不限于：
+   - 销售、出租、许可本项目或其衍生作品；
+   - 在本项目基础上提供收费服务；
+   - 将本项目集成进商业产品或商业服务；
+   - 在应用中植入广告、推广、付费导流等以营利为目的的功能后分发；
+2. 重新分发、发布、上架本项目或其衍生作品的编译产物
+   （包括 APK 及任何其他形式的安装包）；
+3. 修改、移除或遮盖本项目中的版权声明、作者标识与许可声明；
+4. 冒充本项目的原作者，或以作者名义发布任何内容；
+5. 使用本项目的名称、图标或标识，使人误认为你的作品与作者存在关联。
+
+
+三、免责声明
+
+本项目按“现状”提供，不附带任何形式的明示或暗示担保，包括但不限于
+对适销性、特定用途适用性及不侵权的担保。
+
+本项目属于个人业余作品，开发者非 IT 行业从业者，代码主要由 AI 协助生成，
+可能存在缺陷、不稳定或兼容性问题。因使用或无法使用本项目而产生的任何
+直接或间接损失、设备异常、数据丢失或其他损害，作者概不负责。
+
+本项目需要系统级提权（LSPosed / Shizuku / Root），使用前请自行评估风险。
+使用本项目即表示你已知悉并接受上述全部条款。
+
+
+四、条款变更
+
+作者保留在任何时候修改本许可条款、以及变更本项目授权方式的权利。
+条款变更后，以本仓库中的最新版本为准。
+
+
+---
+
+English Summary (for reference only; the Chinese text above prevails)
+
+Copyright (c) 2026 mting1117. All Rights Reserved.
+
+This is NOT an OSI-approved open source license.
+
+You MAY: read and study the source code; compile and run it for personal,
+non-commercial purposes; quote small excerpts for non-commercial discussion
+with attribution.
+
+You MAY NOT: use it commercially in any form; redistribute or publish its
+builds (including APKs); remove or alter the copyright and license notices;
+claim authorship; use the project's name or logo in a misleading way.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. THE AUTHOR
+SHALL NOT BE LIABLE FOR ANY DAMAGES ARISING FROM THE USE OF THIS SOFTWARE.
