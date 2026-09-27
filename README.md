@@ -12,7 +12,7 @@ Android 10+ · LSPosed / Shizuku / Root · Jetpack Compose
 [![Release](https://img.shields.io/github/v/release/mting1117/LinkGo?label=release&color=blue)](https://github.com/mting1117/LinkGo/releases)
 [![Platform](https://img.shields.io/badge/Android-10%2B-brightgreen)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2.10-purple)](https://kotlinlang.org)
-[![License](https://img.shields.io/badge/License-未指定-lightgrey)](#许可协议)
+[![License](https://img.shields.io/badge/许可-保留所有权利%20%2F%20禁止商用-red)](LICENSE)
 
 </div>
 
@@ -211,7 +211,11 @@ Android 11+ 收紧了包可见性。请在系统设置的「应用 → 特殊权
 
 ## 许可协议
 
-本仓库尚未指定开源许可证。在补充 LICENSE 之前，默认保留所有权利。
+本项目**源码公开，但保留所有权利**，具体条款见 [LICENSE](LICENSE)。
+
+需要特别说明的是：**这不是开源许可证**（OSI 不认可禁止商用的许可）。公开源码的目的是供他人阅读、学习与参考，你可以自由查看代码、为个人非商业目的编译自用，但**不得用于任何商业用途，也不得重新分发编译产物（包括 APK）**。
+
+如果你希望将本项目用于商业目的，请先联系作者取得书面许可。
 
 ## 支持
 
