@@ -1758,7 +1758,7 @@ object WindowRouter {
             val matcher = pattern.matcher(html)
             if (matcher.find()) {
                 val url = matcher.group(1)
-                return url?.replace("&amp;", "&")
+                return url?.replace("&amp;", "&")?.let { decodeLiteral(it) }
             }
         } catch (e: Exception) {
             Log.e(TAG, "extractMetaRefreshUrl 异常", e)
@@ -1802,12 +1802,7 @@ object WindowRouter {
                     )
                     val varMatcher = varPattern.matcher(scriptContent)
                     if (varMatcher.find()) {
-                        val encodedUrl = varMatcher.group(1)
-                        return try {
-                            java.net.URLDecoder.decode(encodedUrl, "UTF-8")
-                        } catch (e: Exception) {
-                            encodedUrl
-                        }
+                        return varMatcher.group(1)?.let { decodeLiteral(it, percentDecode = true) }
                     }
 
                     // 情况 C：直接是 URL
@@ -1820,6 +1815,47 @@ object WindowRouter {
             Log.e(TAG, "extractJavaScriptUrl 异常", e)
         }
         return null
+    }
+
+    /**
+     * 还原字符串字面量：处理 JS/JSON 转义（\/ -> /、\\ -> \、\uXXXX、\xXX 等）。
+     * percentDecode = true 时额外做一次百分号解码（如 https%3A%2F%2F，且不做 '+' -> ' '），
+     * 该行为只属于原本就在解码的变量分支，其它调用点不要开。
+     * 注意：这是取字面量后的必经步骤，而不是失败后的兜底。
+     */
+    private fun decodeLiteral(raw: String, percentDecode: Boolean = false): String {
+        val needPercent = percentDecode && raw.contains('%')
+        if (!raw.contains('\\') && !needPercent) return raw
+        val sb = StringBuilder(raw.length)
+        var i = 0
+        while (i < raw.length) {
+            val c = raw[i]
+            if (c != '\\' || i + 1 >= raw.length) {
+                sb.append(c); i++; continue
+            }
+            when (val e = raw[i + 1]) {
+                'u', 'x' -> {
+                    val n = if (e == 'u') 4 else 2
+                    val hex = raw.substring(i + 2, minOf(i + 2 + n, raw.length))
+                    val code = if (hex.length == n) hex.toIntOrNull(16) else null
+                    if (code != null) { sb.append(code.toChar()); i += 2 + n } else { sb.append(e); i += 2 }
+                }
+                'n' -> { sb.append('\n'); i += 2 }
+                'r' -> { sb.append('\r'); i += 2 }
+                't' -> { sb.append('\t'); i += 2 }
+                else -> { sb.append(e); i += 2 }
+            }
+        }
+        val unescaped = sb.toString()
+        if (!needPercent) return unescaped
+        // 只有"还不是带协议的地址"时才做百分号解码，避免破坏正常 URL 里的 % 与 +
+        return if (unescaped.contains('%') && !unescaped.contains("://")) {
+            try {
+                java.net.URLDecoder.decode(unescaped.replace("+", "%2B"), "UTF-8")
+            } catch (e: Exception) {
+                unescaped
+            }
+        } else unescaped
     }
 
     /**
