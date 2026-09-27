@@ -6,12 +6,23 @@
 
 Android 10+ · LSPosed / Shizuku / Root · Jetpack Compose
 
+![Author](https://img.shields.io/badge/作者-非专业开发者-orange)
+![AI](https://img.shields.io/badge/AI%20协作-Gemini%20%2B%20DeepSeek-blueviolet)
+
 [![Release](https://img.shields.io/github/v/release/mting1117/LinkGo?label=release&color=blue)](https://github.com/mting1117/LinkGo/releases)
 [![Platform](https://img.shields.io/badge/Android-10%2B-brightgreen)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2.10-purple)](https://kotlinlang.org)
 [![License](https://img.shields.io/badge/License-未指定-lightgrey)](#许可协议)
 
 </div>
+
+> **开发方式声明**
+>
+> 本项目是**个人业余作品**。开发者**并非 IT 行业从业者**，编码完全出于个人爱好，纯粹是「自己用得上，就顺手做出来」。
+>
+> 项目**绝大部分代码由 AI 协作完成**，主要使用 **Gemini** 与 **DeepSeek** 两款模型。开发者负责提出需求、验证效果、把控方向与反复调试，代码实现主要交给 AI。
+>
+> 因此，本项目可能存在架构不够严谨、实现不够优雅之处，欢迎指正，也请对代码质量保持合理预期。
 
 ---
 
@@ -195,6 +206,7 @@ Android 11+ 收紧了包可见性。请在系统设置的「应用 → 特殊权
 
 - 本项目**需要系统级提权**，请确认你了解 LSPosed / Shizuku / Root 的作用与风险后再使用
 - 剪贴板内容与屏幕识别**均在本地处理，不上传任何数据**
+- 因本项目为个人业余作品，使用前请自行评估风险，作者不对任何设备异常或数据损失负责
 - 仅供学习与个人使用，请遵守你所在地区的法律法规
 
 ## 许可协议
